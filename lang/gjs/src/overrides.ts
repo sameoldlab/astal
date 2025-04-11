@@ -83,3 +83,9 @@ await suppress(import("gi://AstalWp"), ({ Wp, Audio, Video }) => {
     patch(Video.prototype, "sources")
     patch(Video.prototype, "devices")
 })
+
+await suppress(import("gi://AstalNiri"), ({ Niri }) => {
+    patch(Niri.prototype, "workspaces")
+    patch(Niri.prototype, "windows")
+    patch(Niri.prototype, "outputs")
+})

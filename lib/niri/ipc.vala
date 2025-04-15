@@ -41,6 +41,11 @@ internal class IPC {
         ostream.put_string("\n");
         ostream.flush();
     }
+    public void send_str(string msg) throws Error {
+        ostream.put_string(msg);
+        ostream.put_string("\n");
+        ostream.flush();
+    }
 
     public async void send_async(Json.Node node) throws Error {
         ostream.put_string(Json.to_string(node, false));
@@ -51,6 +56,10 @@ internal class IPC {
     public Json.Node recv() throws Error {
         var line = istream.read_line();
         return Json.from_string(line);
+    }
+    public string recv_str() throws Error {
+        var line = istream.read_line();
+        return line;
     }
 
     public async Json.Node recv_async() throws Error {

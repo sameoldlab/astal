@@ -148,16 +148,16 @@ public class Niri : Object {
         }
     }
 
-    private Json.Node? message(Json.Node message) {
+    public string message(string message) {
         var ipc = IPC.connect();
-        if (ipc == null) return null;
+        if (ipc == null) return "Error: IPC Not Available";
 
         try {
-            ipc.send(message);
-            return ipc.recv();
+            ipc.send_str(message);
+            return ipc.recv_str();
         } catch (Error err) {
             critical("%s", err.message);
-            return null;
+            return err.message;
         } finally {
             ipc.close();
         }

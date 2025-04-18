@@ -214,15 +214,14 @@ public class Niri : Object {
             return;
         }
 
-        if (_active_window_id.is_null()) {
-            workspace.active_window_id = -1;
-            workspace_active_window_changed((int) workspace_id, -1);
-        } else {
-            var active_window_id = _active_window_id.get_int();
-            workspace.active_window_id = active_window_id;
-            workspace_active_window_changed((int)workspace_id, (int)active_window_id);
+        int window_id = -1;
+        if (_active_window_id.get_int() > 0) {
+            window_id = (int)_active_window_id.get_int();
         }
-            workspace.active_window_changed(workspace.active_window_id);
+
+        workspace.active_window_id = window_id;
+        workspace_active_window_changed((int)workspace_id, (int)workspace.active_window_id);
+        workspace.active_window_changed((int)workspace.active_window_id);
     }
 
     private void on_windows_changed(Json.Object event) {

@@ -25,16 +25,23 @@ public class Workspace : Object {
     // public List<weak Window> windows { owned get { return _windows.copy(); } }
 
     /** Emitted when a workspace was activated on an output. */
-    public signal void activated();
+    public signal void activated() {
+        changed();
+    }
     /** Emitted when the window changes on a workspace. */
-    public signal void active_window_changed(uint64? id);
+    public signal void active_window_changed(int id) {
+        changed();
+    }
+    public signal Workspace changed() {
+        return this;
+    }
 
     internal Workspace.from_json(Json.Object object) {
         sync(object);
     }
 
     internal void sync(Json.Object object) {
-        id = object.get_int_member("id");
+        id =  object.get_int_member("id");
         idx = (uint8) object.get_int_member("idx");
         var _name = object.get_member("name");
         var _output = object.get_member("output");
@@ -51,6 +58,7 @@ public class Workspace : Object {
 
         if (_output.is_null()) { output = null;}
         else { output = _output.get_string(); }
+        changed();
     }
 
     public unowned Window? get_active_window() {

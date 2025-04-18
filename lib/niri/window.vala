@@ -14,7 +14,9 @@ public class Window : Object {
     /** if this is the current Focused Window */
     public bool is_focused { get; internal set; }
 
-    public signal void changed();
+    public signal Window changed() {
+        return this;
+    }
     public signal void closed();
 
     internal Window.from_json(Json.Object object) {
@@ -41,6 +43,7 @@ public class Window : Object {
 
         if (_workspace_id.is_null()) { workspace_id = -1; }
         else { workspace_id = _workspace_id.get_int(); }
+        changed();
     }
 }
 }

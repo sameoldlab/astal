@@ -245,7 +245,6 @@ public class Niri : Object {
         var window = _windows.get(window_id);
         if (window != null) {
             window.sync(window_object);
-            window.changed();
             window_changed(window);
         } else {
             window = new Window.from_json(window_object);
@@ -344,6 +343,7 @@ public class Niri : Object {
     private unowned void update_focused_workspace(uint64? id) {
         if(focused_workspace != null) {
             focused_workspace.is_focused = focused_workspace.id == id;
+            focused_workspace.changed();
             if (focused_workspace.is_focused) {
                 notify_property("focused_workspace");
                 return;

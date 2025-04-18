@@ -20,13 +20,13 @@ public class Niri : Object {
     public uint8 keyboard_layout_idx { get; private set; }
     // representing Optional uint64 as -1 due to: `warning: Type `uint64?' can not be used for a GLib.Object property`. 
     // Will overflow if niri ever uses full uint64 values or someone opens 9 quintillion windows
-    public int64 focused_workspace_id { get {
+    public uint64 focused_workspace_id { get {
         if(focused_workspace == null) return -1;
-        return (int64)focused_workspace.id; 
+        return focused_workspace.id; 
     } private set {} }
-    public int64 focused_window_id { get {
+    public uint64 focused_window_id { get {
         if(focused_window == null) return -1;
-        return (int64)focused_window.id; 
+        return focused_window.id; 
     } private set {} }
     public string focused_output_name { get; private set; }
     public Overview overview { get; private set; }
@@ -48,26 +48,28 @@ public class Niri : Object {
     public signal void event(Json.Node event);
     /** The list of workspaces changed. */
     public signal void workspaces_changed(List<weak Workspace> workspaces);
-    public signal void workspace_activated(int64 workspace, bool focused);
-    public signal void workspace_active_window_changed(int64 workspace, int64 window_id);
+    public signal void workspace_activated(uint64 workspace, bool focused);
+    public signal void workspace_active_window_changed(int workspace, int window_id);
     /** The list of windows changed. */
     public signal void windows_changed(List<weak Window> windows);
     public signal void window_opened_or_changed(Window window);
     /** A new window has been opened. */
     public signal void window_opened(Window window);
     /** An existing window has changed. */
-    public signal void window_changed(Window window);
+    public signal void window_changed(Window window) {
+        window.changed();
+    }
     /** A window has closed. */
-    public signal void window_closed(int64 id);
+    public signal void window_closed(uint64 id);
     /** A window has been focused. */
-    public signal void window_focus_changed(int64 window_id);
+    public signal void window_focus_changed(int window_id);
     /** Window urgency changed */
     public signal void window_urgency_changed(int64 id, bool urgent);
     /** Workspace urgency changed */
     public signal void workspace_urgency_changed(int64 id, bool urgent);
     public signal void overview_opened_or_closed(bool is_open);
     public signal void keyboard_layouts_changed(Array<string> keyboard_layouts);
-    public signal void keyboard_layout_switched(uint8 idx);
+    public signal void keyboard_layout_switched(int idx);
 
     private IPC? event_socket;
     static Niri _instance;
@@ -214,11 +216,11 @@ public class Niri : Object {
 
         if (_active_window_id.is_null()) {
             workspace.active_window_id = -1;
-            workspace_active_window_changed(workspace_id, -1);
+            workspace_active_window_changed((int) workspace_id, -1);
         } else {
             var active_window_id = _active_window_id.get_int();
             workspace.active_window_id = active_window_id;
-            workspace_active_window_changed(workspace_id, active_window_id);
+            workspace_active_window_changed((int)workspace_id, (int)active_window_id);
         }
             workspace.active_window_changed(workspace.active_window_id);
     }
@@ -274,9 +276,9 @@ public class Niri : Object {
 
     private void on_window_focus_changed(Json.Object event) {
         var _id = event.get_member("id");
-        int64 id = -1;
+        uint64 id = -1;
         if (!_id.is_null())  id = _id.get_int();
-        
+
         update_focused_window(id);
     }
 
@@ -284,7 +286,7 @@ public class Niri : Object {
         var id = event.get_int_member("id");
         var urgent = event.get_boolean_member("urgent");
 
-        var window = get_window(id);
+        var window = get_window((int)id);
         if(window != null) {
             window.is_urgent = urgent;
         }
@@ -327,12 +329,12 @@ public class Niri : Object {
         overview_opened_or_closed(is_open);
     }
 
-    public unowned Window? get_window(int64 id) {
+    public unowned Window? get_window(uint id) {
         if (id < 0) return null;
         return _windows.get(id);
     }
 
-    public unowned Workspace? get_workspace(int64 id) {
+    public unowned Workspace? get_workspace(uint64 id) {
         if (id < 0) return null;
         return _workspaces.get(id);
     }
@@ -373,7 +375,7 @@ public class Niri : Object {
         if (new_focused != null) {
             new_focused.is_focused = true;
             focused_window = new_focused;
-            window_focus_changed((int64)focused_window.id);
+            window_focus_changed((int)focused_window.id);
         } else {
             focused_window = null;
             window_focus_changed(-1);

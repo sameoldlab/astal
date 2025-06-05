@@ -1,7 +1,7 @@
 namespace AstalNiri {
 public class Workspace : Object {
     /** unique id of workspace */
-    public int64 id { get; private set; }
+    public uint64 id { get; private set; }
     /** index of the workspace on its monitor */
     public uint8 idx { get; private set; }
     /** optional name of the workspace */
@@ -9,12 +9,14 @@ public class Workspace : Object {
     // TODO: move workspace to new output on set */
     /** nome of the output the workspace is on */
     public string? output { get; internal set; }
+    /** if a window on the workspace is urgent */
+    public bool is_urgent { get; internal set; }
     /** if the workspace is active on its outpput */
     public bool is_active { get; internal set; }
     /** if this is the current Focused Workspace */
     public bool is_focused { get; internal set; }
     /** id of the active window on the workspace */
-    public int64 active_window_id {get; internal set;}
+    public uint64 active_window_id {get; internal set;}
     /* public List<weak Window> windows { owned get {
      return Niri._windows.get_values().copy(); 
     } } */
@@ -25,7 +27,7 @@ public class Workspace : Object {
     /** Emitted when a workspace was activated on an output. */
     public signal void activated();
     /** Emitted when the window changes on a workspace. */
-    public signal void active_window_changed(int64? id);
+    public signal void active_window_changed(uint64? id);
 
     internal Workspace.from_json(Json.Object object) {
         sync(object);
@@ -36,6 +38,7 @@ public class Workspace : Object {
         idx = (uint8) object.get_int_member("idx");
         var _name = object.get_member("name");
         var _output = object.get_member("output");
+        is_urgent = object.get_boolean_member("is_urgent");
         is_active = object.get_boolean_member("is_active");
         is_focused = object.get_boolean_member("is_focused");
         var _active_window_id = object.get_member("active_window_id");
@@ -52,7 +55,7 @@ public class Workspace : Object {
 
     public unowned Window? get_active_window() {
         if (active_window_id == -1) return null;
-        return Niri.get_default().get_window(active_window_id);
+        return Niri.get_default()._windows.get(active_window_id);
     }
 }
 }

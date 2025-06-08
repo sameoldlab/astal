@@ -206,23 +206,31 @@ namespace AstalNiri {
       }
     }
 
-    public struct WorkspaceReferenceArg {
+    public enum WorkspaceReferenceArgTag {
+      Id,
+      Index,
+      Name,
+    }
+
+    public struct WorkspaceReferenceArg<T> {
       public WorkspaceReferenceArgTag tag {get; set;}
-      public void* value {get; set;}
+      public T value {get; set;}
 
-      public WorkspaceReferenceArg.id(uint64* id) {
-        this.tag = WorkspaceReferenceArgTag.Id;
-        this.value = id;
+      public WorkspaceReferenceArg(WorkspaceReferenceArgTag tag, T value) {
+        this.tag = tag;
+        this.value = value;
       }
 
-      public WorkspaceReferenceArg.index(uint8* index) {
-        this.tag = WorkspaceReferenceArgTag.Index;
-        this.value = index;
+      public static WorkspaceReferenceArg<uint64?> id(uint64 id) {
+        return WorkspaceReferenceArg<uint64?>(WorkspaceReferenceArgTag.Id, id);
       }
 
-      public WorkspaceReferenceArg.name(string name) {
-        this.tag = WorkspaceReferenceArgTag.Name;
-        this.value = name;
+      public static WorkspaceReferenceArg<uint8?> index(uint8 index) {
+          return WorkspaceReferenceArg<uint8?>(WorkspaceReferenceArgTag.Index, index);
+      }
+
+      public static WorkspaceReferenceArg<string?> name(string name) {
+        return WorkspaceReferenceArg<string?>(WorkspaceReferenceArgTag.Name, name);
       }
 
       public static Json.Node serialize_json(void* _boxed) {
@@ -248,10 +256,9 @@ namespace AstalNiri {
       }
     }
 
-    public enum WorkspaceReferenceArgTag {
-      Id,
-      Index,
-      Name,
+    public enum ColumnDisplayTag {
+      Normal,
+      Tabbed
     }
 
     public struct ColumnDisplay {
@@ -275,33 +282,36 @@ namespace AstalNiri {
       }
     }
 
-    public enum ColumnDisplayTag {
-      Normal,
-      Tabbed
+    public enum SizeChangeTag {
+      SetFixed,
+      SetProportion,
+      AdjustFixed,
+      AdjustProportion,
     }
 
-    public struct SizeChange {
+    public struct SizeChange<T> {
       public SizeChangeTag tag {get; set;}
-      public void* value {get; set;}
+      public T value {get; set;}
 
-      public SizeChange.set_fixed(int64* fixed) {
-        this.tag = SizeChangeTag.SetFixed;
-        this.value = fixed;
+      public SizeChange(SizeChangeTag tag, T value) {
+        this.tag = tag;
+        this.value = value;
       }
 
-      public SizeChange.set_proportion(double* proportion) {
-        this.tag = SizeChangeTag.SetProportion;
-        this.value = proportion;
+      public static SizeChange<int64?> set_fixed(int64 fixed) {
+        return SizeChange<int64?>(SizeChangeTag.SetFixed, fixed);
       }
 
-      public SizeChange.adjust_fixed(int64* fixed) {
-        this.tag = SizeChangeTag.AdjustFixed;
-        this.value = fixed;
+      public static SizeChange<double?> set_proportion(double proportion) {
+        return SizeChange<double?>(SizeChangeTag.SetProportion, proportion);
       }
 
-      public SizeChange.adjust_proportion(double* proportion) {
-        this.tag = SizeChangeTag.AdjustProportion;
-        this.value = proportion;
+      public static SizeChange<int64?> adjust_fixed(int64 fixed) {
+        return SizeChange<int64?>(SizeChangeTag.AdjustFixed, fixed);
+      }
+
+      public static SizeChange<double?> adjust_proportion(double proportion) {
+        return SizeChange<double?>(SizeChangeTag.AdjustProportion, proportion);
       }
 
       public static Json.Node serialize_json(void *_boxed) {
@@ -311,19 +321,19 @@ namespace AstalNiri {
         var object = new Json.Object();
         switch (boxed.tag) {
           case SizeChangeTag.SetFixed: {
-            object.set_int_member("SetFixed", *((int64*)boxed.value));
+            object.set_int_member("SetFixed", *(int64*)boxed.value);
             break;
           }
           case SizeChangeTag.SetProportion: {
-            object.set_double_member("SetProportion", *((double*)boxed.value));
+            object.set_double_member("SetProportion", *(double*)boxed.value);
             break;
           }
           case SizeChangeTag.AdjustFixed: {
-            object.set_int_member("AdjustFixed", *((int64*)boxed.value));
+            object.set_int_member("AdjustFixed", *(int64*)boxed.value);
             break;
           }
           case SizeChangeTag.AdjustProportion: {
-            object.set_double_member("AdjustProportion", *((double*)boxed.value));
+            object.set_double_member("AdjustProportion", *(double*)boxed.value);
             break;
           }
         }
@@ -332,11 +342,10 @@ namespace AstalNiri {
       }
     }
 
-    public enum SizeChangeTag {
-      SetFixed,
-      SetProportion,
-      AdjustFixed,
-      AdjustProportion,
+    public enum LayoutSwitchTargetTag {
+      Next,
+      Prev,
+      Index,
     }
 
     public struct LayoutSwitchTarget {
@@ -380,12 +389,6 @@ namespace AstalNiri {
         }
         return node;
       }
-    }
-
-    public enum LayoutSwitchTargetTag {
-      Next,
-      Prev,
-      Index,
     }
   }
 }

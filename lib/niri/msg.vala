@@ -1,5 +1,9 @@
 namespace AstalNiri {
 public class msg : Object {
+    public static void init() {
+      ActionFields.register_serialize_funcs();
+    }
+
     public static string? send(string message) {
         IPC ipc;
 
@@ -41,6 +45,7 @@ public class msg : Object {
     /** Formats a simple action for Niri's IPC   */
     private static bool send_act(string str, string fields = "{}") {
         var cmd = "{\"Action\":{\"%s\":%s}}\n".printf(str, fields);
+        print("Sending: %s", cmd);
         var res = send(cmd);
         critical(res);
         if (res == "{\"Ok\":\"Handled\"}") return true;
@@ -263,7 +268,7 @@ public class msg : Object {
       return send_act("ToggleColumnTabbedDisplay");
     }
 
-    public static bool set_column_display(ActionFields.ColumnDisplay display) {
+    public static bool set_column_display(ActionFields.ColumnDisplayTag display) {
       return send_act("SetColumnDisplay", new Actions.SetColumnDisplay(display).to_string());
     }
 
@@ -449,6 +454,10 @@ public class msg : Object {
 
     public static bool expand_column_to_available_width() {
       return send_act("ExpandColumnToAvailableWidth");
+    }
+
+    public static bool switch_layout(ActionFields.LayoutSwitchTarget layout) {
+      return send_act("SwitchLayout", new Actions.SwitchLayout(layout).to_string());
     }
 
 

@@ -292,9 +292,9 @@ public class msg : Object {
       return send_act("FocusWorkspaceUp");
     }
 
-    public static bool focus_workspace(ActionFields.WorkspaceReferenceArg reference) {
-      return send_act("FocusWorkspace", new Actions.FocusWorkspace(reference).to_string());
-    }
+    // public static bool focus_workspace(ActionFields.WorkspaceReferenceArg reference) {
+    //   return send_act("FocusWorkspace", new Actions.FocusWorkspace(reference).to_string());
+    // }
 
     public static bool focus_workspace_previous() {
       return send_act("FocusWorkspacePrevious");
@@ -456,17 +456,79 @@ public class msg : Object {
       return send_act("ExpandColumnToAvailableWidth");
     }
 
-    public static bool switch_layout(ActionFields.LayoutSwitchTarget layout) {
-      return send_act("SwitchLayout", new Actions.SwitchLayout(layout).to_string());
+    // public static bool switch_layout(ActionFields.LayoutSwitchTarget layout) {
+    //   return send_act("SwitchLayout", new Actions.SwitchLayout(layout).to_string());
+    // }
+
+    public static string layout_switch_target(ActionFields.LayoutSwitchTargetTag tag, uint8? index = null) {
+      switch (tag) {
+        case ActionFields.LayoutSwitchTargetTag.Next:
+          return "\"Next\"";
+        case ActionFields.LayoutSwitchTargetTag.Prev:
+          return "\"Prev\"";
+        case ActionFields.LayoutSwitchTargetTag.Index:
+          if (index == null) {
+            return "";
+          }
+          return "{\"Index\":%d}".printf(index);
+      }
+      return "";
     }
 
+    public static bool switch_layout(ActionFields.LayoutSwitchTargetTag tag, uint8? index = null) {
+      var target = layout_switch_target(tag, index);
+      if (target == "") {
+        critical("Invalid target");
+        return false;
+      }
+      return send_act("SwitchLayout", "{\"layout\":%s}".printf(target));
+    }
+
+    public static string workspace_reference_arg<T>(ActionFields.WorkspaceReferenceArgTag tag, T value) {
+      switch (tag) {
+        case ActionFields.WorkspaceReferenceArgTag.Name:
+          if (typeof(T) != typeof(string)) {
+            return "";
+          }
+          return "{\"Name\":\"%s\"}".printf((string)value);
+        case ActionFields.WorkspaceReferenceArgTag.Id:
+          if (typeof(T) != typeof(int)) {
+            return "";
+          }
+          return "{\"Id\":%lld}".printf((int)value);
+        case ActionFields.WorkspaceReferenceArgTag.Index:
+          if (typeof(T) != typeof(int)) {
+            return "";
+          }
+          return "{\"Id\":%d}".printf((int)value);
+      }
+      return "";
+    }
+
+    public static bool focus_workspace<T>(ActionFields.WorkspaceReferenceArgTag tag, T value) {
+      var reference = workspace_reference_arg<T>(tag, value);
+      if (reference == "") {
+        critical("Invalid workspace reference");
+        return false;
+      }
+      return send_act("FocusWorkspace", "{\"reference\":%s}".printf(reference));
+    }
 
 
     // TODO(2025-06-07, Max Bolotin): Continue here
 
     private static string fmt_str(string str) {
-        return "\"%s\"\n".printf(str);
+      return "\"%s\"\n".printf(str);
     }
+
+    // private static string fmt_bool(boolean bool) {
+    //   return "%s".printf(bool ? "true" : "false");
+    // }
+    //
+    // private static string fmt_int(int int) {
+    //   return "%s".printf("")
+    // }
+
     public string layers() {
       return send(fmt_str("Layers"));
     }

@@ -668,74 +668,16 @@ public class msg : Object {
       return send_act("ExpandColumnToAvailableWidth");
     }
 
-    // public static bool switch_layout(ActionFields.LayoutSwitchTarget layout) {
-    //   return send_act("SwitchLayout", new Actions.SwitchLayout(layout).to_string());
-    // }
-
-    private static string layout_switch_target(ActionFields.LayoutSwitchTargetTag tag, uint8? index = null) {
-      switch (tag) {
-        case ActionFields.LayoutSwitchTargetTag.Next:
-          return "\"Next\"";
-        case ActionFields.LayoutSwitchTargetTag.Prev:
-          return "\"Prev\"";
-        case ActionFields.LayoutSwitchTargetTag.Index:
-          if (index == null) {
-            return "";
-          }
-          return "{\"Index\":%d}".printf(index);
-      }
-      return "";
+    public static bool switch_layout_next() {
+      return send_act("SwitchLayout", serialize_fields({ str_member("layout", "Next") }));
     }
 
-    public static bool switch_layout(ActionFields.LayoutSwitchTargetTag tag, uint8? index = null) {
-      var target = layout_switch_target(tag, index);
-      if (target == "") {
-        critical("Invalid target");
-        return false;
-      }
-      return send_act("SwitchLayout", "{\"layout\":%s}".printf(target));
+    public static bool switch_layout_prev() {
+      return send_act("SwitchLayout", serialize_fields({ str_member("layout", "Prev") }));
     }
 
-    private static string workspace_reference_arg<T>(ActionFields.WorkspaceReferenceArgTag tag, T value) {
-      switch (tag) {
-        case ActionFields.WorkspaceReferenceArgTag.Name:
-          if (typeof(T) != typeof(string)) {
-            return "";
-          }
-          return "{\"Name\":\"%s\"}".printf((string)value);
-        case ActionFields.WorkspaceReferenceArgTag.Id:
-          if (typeof(T) != typeof(int)) {
-            return "";
-          }
-          return "{\"Id\":%lld}".printf((int)value);
-        case ActionFields.WorkspaceReferenceArgTag.Index:
-          if (typeof(T) != typeof(int)) {
-            return "";
-          }
-          return "{\"Id\":%d}".printf((int)value);
-      }
-      return "";
-    }
-
-    private static bool focus_workspace<T>(ActionFields.WorkspaceReferenceArgTag tag, T value) {
-      var reference = workspace_reference_arg<T>(tag, value);
-      if (reference == "") {
-        critical("Invalid workspace reference");
-        return false;
-      }
-      return send_act("FocusWorkspace", "{\"reference\":%s}".printf(reference));
-    }
-
-    public static bool focus_workspace_id(int id) {
-      return focus_workspace(ActionFields.WorkspaceReferenceArgTag.Id, id);
-    }
-
-    public static bool focus_workspace_index(int index) {
-      return focus_workspace(ActionFields.WorkspaceReferenceArgTag.Index, index);
-    }
-
-    public static bool focus_workspace_name(string name) {
-      return focus_workspace(ActionFields.WorkspaceReferenceArgTag.Name, name);
+    public static bool switch_layout_index(int index) {
+      return send_act("SwitchLayout", serialize_fields({ obj_member("layout", { int_member("Index", index) }) }));
     }
 
     // TODO(2025-06-07, Max Bolotin): Continue here

@@ -1,4 +1,11 @@
 namespace AstalNiri {
+
+delegate void ParameterFuncDelegate(Json.Builder b);
+
+struct ParameterFunc {
+  ParameterFuncDelegate build;
+}
+
 public class msg : Object {
     public static void init() {
       ActionFields.register_serialize_funcs();
@@ -52,8 +59,129 @@ public class msg : Object {
         return false;
     }
 
+    private static ParameterFunc member(string name, owned ParameterFunc value_setter) {
+      return {
+        (b) => {
+          b.set_member_name(name);
+          value_setter.build(b);
+        }
+      };
+    }
+
+    private static ParameterFunc int_value(int value) {
+      return {
+        (b) => {
+          b.add_int_value(value);
+        }
+      };
+    }
+
+    private static ParameterFunc int_member(string name, owned int? value) {
+      if (value == null) { return {() => {}}; }
+      return member(name, int_value(value));
+    }
+
+    private static ParameterFunc str_value(string value) {
+      return {
+        (b) =>{
+          b.add_string_value(value);
+        }
+      };
+    }
+
+    private static ParameterFunc str_member(string name, owned string? value) {
+      if (value == null) return {() => {}};
+      return member(name, str_value(value));
+    }
+
+    private static ParameterFunc double_value(double value) {
+      return {
+        (b) => {
+          b.add_double_value(value);
+        }
+      };
+    }
+
+    private static ParameterFunc double_member(string name, owned double? value) {
+      if (value == null) return {() => {}};
+      return member(name, double_value(value));
+    }
+
+    private static ParameterFunc bool_value(bool value) {
+      return {
+        (b) => {
+          b.add_boolean_value(value);
+        }
+      };
+    }
+
+    private static ParameterFunc bool_member(string name, owned bool? value) {
+      if (value == null) return {() => {}};
+      return member(name, bool_value(value));
+    }
+
+    private static ParameterFunc obj_value(ParameterFunc[] fields) {
+      return {
+        (b) => {
+          b.begin_object();
+          foreach (var field in fields) {
+            field.build(b);
+          }
+          b.end_object();
+        }
+      };
+    }
+
+    private static ParameterFunc obj_member(string name, ParameterFunc[] fields) {
+      return member(name, obj_value(fields));
+    }
+
+    private static ParameterFunc array_value(ParameterFunc[] items) {
+      return {
+        (b) => {
+          b.begin_array();
+          foreach (var item in items) {
+            item.build(b);
+          }
+          b.end_array();
+        }
+      };
+    }
+
+    private static ParameterFunc array_member(string name, ParameterFunc[] items) {
+      return member(name, array_value(items));
+    }
+
+    private static ParameterFunc str_array_value(owned string[] items) {
+      return {
+        (b) => {
+          b.begin_array();
+          foreach (var item in items) {
+            b.add_string_value(item);
+          }
+          b.end_array();
+        }
+      };
+    }
+
+    private static ParameterFunc str_array_member(string name, owned string[] items) {
+      return member(name, str_array_value(items));
+    }
+
+    private static string serialize_fields(ParameterFunc[] fields) {
+      var builder = new Json.Builder();
+      var generator = new Json.Generator();
+
+      var fields_builder = obj_value(fields);
+      fields_builder.build(builder);
+
+      var root = builder.get_root();
+      generator.set_root(root);
+      return generator.to_data(null);
+    }
+
     public static bool quit(bool skip_confirmation) {
-      return send_act("Quit", new Actions.Quit(skip_confirmation).to_string());
+      return send_act("Quit", serialize_fields({ bool_member("skip_confirmation", skip_confirmation)}));
     }
 
     public static bool power_off_monitors() {
@@ -64,48 +192,48 @@ public class msg : Object {
       return send_act("PowerOnMonitors");
     }
 
-    public static bool spawn(string[] command) {
-      return send_act("Spawn", new Actions.Spawn(command).to_string());
+    public static bool spawn(owned string[] command) {
+      return send_act("Spawn", serialize_fields({ str_array_member("command", command) }));
     }
 
-    public static bool do_screen_transition(uint16? delay_ms) {
-      return send_act("DoScreenTransition", new Actions.DoScreenTransition(delay_ms).to_string());
+    public static bool do_screen_transition(int? delay_ms) {
+      return send_act("DoScreenTransition", serialize_fields({ int_member("delay_ms", delay_ms) }));
     }
 
     public static bool screenshot(bool show_pointer) {
-      return send_act("Screenshot", new Actions.Screenshot(show_pointer).to_string());
+      return send_act("Screenshot", serialize_fields({ bool_member("show_pointer", show_pointer) }));
     }
 
     public static bool screenshot_screen(bool write_to_disk, bool show_pointer) {
-      return send_act("ScreenshotScreen", new Actions.ScreenshotScreen(write_to_disk, show_pointer).to_string());
+      return send_act("ScreenshotScreen", serialize_fields({ bool_member("write_to_disk", write_to_disk), bool_member("show_pointer", show_pointer)}));
     }
     
-    public static bool screenshot_window(uint64? id, bool write_to_disk) {
-      return send_act("ScreenshotWindow", new Actions.ScreenshotWindow(id, write_to_disk).to_string());
+    public static bool screenshot_window(int? id, bool write_to_disk) {
+      return send_act("ScreenshotWindow", serialize_fields({ int_member("id", id), bool_member("write_to_disk", write_to_disk) }));
     }
 
     public static bool toggle_keyboard_shortcuts_inhibit() {
       return send_act("ToggleKeyboardShortcutsInhibit");
     }
 
-    public static bool close_window(uint64? id) {
-      return send_act("CloseWindow", new Actions.CloseWindow(id).to_string());
+    public static bool close_window(int? id) {
+      return send_act("CloseWindow", serialize_fields({ int_member("id", id)}));
     }
 
-    public static bool fullscreen_window(uint64? id) {
-      return send_act("FullscreenWindow", new Actions.FullscreenWindow(id).to_string());
+    public static bool fullscreen_window(int? id) {
+      return send_act("FullscreenWindow", serialize_fields({ int_member("id", id) }));
     }
 
-    public static bool toggle_windowed_fullscreen(uint64? id) {
-      return send_act("ToggleWindowedFullscreen", new Actions.ToggleWindowedFullscreen(id).to_string());
+    public static bool toggle_windowed_fullscreen(int? id) {
+      return send_act("ToggleWindowedFullscreen", serialize_fields({ int_member("id", id) }));
     }
 
-    public static bool focus_window(uint64 id) {
-      return send_act("FocusWindow", new Actions.FocusWindow(id).to_string());
+    public static bool focus_window(int id) {
+      return send_act("FocusWindow", serialize_fields({ int_member("id", id) }));
     }
 
-    public static bool focus_window_in_column(uint8 index) {
-      return send_act("FocusWindowInColumn", new Actions.FocusWindowInColumn(index).to_string());
+    public static bool focus_window_in_column(int index) {
+      return send_act("FocusWindowInColumn", serialize_fields({ int_member("index", index) }));
     }
 
     public static bool focus_window_previous() {
@@ -136,8 +264,8 @@ public class msg : Object {
       return send_act("FocusColumnLeftOrLast");
     }
 
-    public static bool focus_column(size_t index) {
-      return send_act("FocusColumn", new Actions.FocusColumn(index).to_string());
+    public static bool focus_column(int index) {
+      return send_act("FocusColumn", serialize_fields({ int_member("index", index) }));
     }
 
     public static bool focus_window_or_monitor_up() {
@@ -220,8 +348,8 @@ public class msg : Object {
       return send_act("MoveColumnLeftOrToMonitorRight");
     }
 
-    public static bool move_column_to_index(size_t index) {
-      return send_act("MoveColumnToIndex", new Actions.MoveColumnToIndex(index).to_string());
+    public static bool move_column_to_index(int index) {
+      return send_act("MoveColumnToIndex", serialize_fields({ int_member("index", index) }));
     }
 
     public static bool move_window_down() {
@@ -240,12 +368,12 @@ public class msg : Object {
       return send_act("MoveWindowUpOrToWorkspaceUp");
     }
 
-    public static bool consume_or_expel_window_left(uint64? id) {
-      return send_act("ConsumeOrExpelWindowLeft", new Actions.ConsumeOrExpelWindowLeft(id).to_string());
+    public static bool consume_or_expel_window_left(int? id) {
+      return send_act("ConsumeOrExpelWindowLeft", serialize_fields({ int_member("id", id) }));
     }
 
-    public static bool consume_or_expel_window_right(uint64? id) {
-      return send_act("ConsumeOrExpelWindowRight", new Actions.ConsumeOrExpelWindowRight(id).to_string());
+    public static bool consume_or_expel_window_right(int? id) {
+      return send_act("ConsumeOrExpelWindowRight", serialize_fields({ int_member("id", id) }));
     }
 
     public static bool consume_window_into_column() {
@@ -269,15 +397,27 @@ public class msg : Object {
     }
 
     public static bool set_column_display(ActionFields.ColumnDisplayTag display) {
-      return send_act("SetColumnDisplay", new Actions.SetColumnDisplay(display).to_string());
+      string display_field;
+      switch (display) {
+        case ActionFields.ColumnDisplayTag.Normal:
+          display_field = "Normal";
+          break;
+        case ActionFields.ColumnDisplayTag.Tabbed:
+          display_field = "Tabbed";
+          break;
+        default:
+          critical("Unknown display tag");
+          return false;
+      }
+      return send_act("SetColumnDisplay", serialize_fields({ str_member("display", display_field) }));
     }
 
     public static bool center_column() {
       return send_act("CenterColumn");
     }
 
-    public static bool center_window(uint64? id) {
-      return send_act("CenterWindow", new Actions.CenterWindow(id).to_string());
+    public static bool center_window(int? id) {
+      return send_act("CenterWindow", serialize_fields({ int_member("id", id) }));
     }
 
     public static bool center_visible_columns() {
@@ -292,10 +432,6 @@ public class msg : Object {
       return send_act("FocusWorkspaceUp");
     }
 
-    // public static bool focus_workspace(ActionFields.WorkspaceReferenceArg reference) {
-    //   return send_act("FocusWorkspace", new Actions.FocusWorkspace(reference).to_string());
-    // }
-
     public static bool focus_workspace_previous() {
       return send_act("FocusWorkspacePrevious");
     }
@@ -308,20 +444,36 @@ public class msg : Object {
       return send_act("MoveWindowToWorkspaceUp");
     }
 
-    public static bool move_window_to_workspace(uint64? window_id, ActionFields.WorkspaceReferenceArg reference, bool focus) {
-      return send_act("MoveWindowToWorkspace", new Actions.MoveWindowToWorkspace(window_id, reference, focus).to_string());
+    public static bool move_window_to_workspace_by_id(int? window_id, int workspace_id, bool focus) {
+      return send_act("MoveWindowToWorkspace", serialize_fields({ obj_member("reference", { int_member("Id", workspace_id) }), int_member("window_id", window_id), bool_member("focus", focus) }));
+    }
+
+    public static bool move_window_to_workspace_by_index(int? window_id, int workspace_index, bool focus) {
+      return send_act("MoveWindowToWorkspace", serialize_fields({ obj_member("reference", { int_member("Index", workspace_index) }), int_member("window_id", window_id), bool_member("focus", focus) }));
+    }
+
+    public static bool move_window_to_workspace_by_name(int? window_id, string workspace_name, bool focus) {
+      return send_act("MoveWindowToWorkspace", serialize_fields({ obj_member("reference", { str_member("Name", workspace_name) }), int_member("window_id", window_id), bool_member("focus", focus) }));
     }
 
     public static bool move_column_to_workspace_down(bool focus) {
-      return send_act("MoveColumnToWorkspaceDown", new Actions.MoveColumnToWorkspaceDown(focus).to_string());
+      return send_act("MoveColumnToWorkspaceDown", serialize_fields({ bool_member("focus", focus) }));
     }
 
     public static bool move_column_to_workspace_up(bool focus) {
-      return send_act("MoveColumnToWorkspaceUp", new Actions.MoveColumnToWorkspaceUp(focus).to_string());
+      return send_act("MoveColumnToWorkspaceUp", serialize_fields({ bool_member("focus", focus) }));
     }
 
-    public static bool move_column_to_workspace(ActionFields.WorkspaceReferenceArg reference, bool focus) {
-      return send_act("MoveColumnToWorkspace", new Actions.MoveColumnToWorkspace(reference, focus).to_string());
+    public static bool move_column_to_workspace_by_id(int workspace_id, bool focus) {
+      return send_act("MoveColumnToWorkspace", serialize_fields({ obj_member("reference", { int_member("Id", workspace_id) }), bool_member("focus", focus) }));
+    }
+
+    public static bool move_column_to_workspace_by_index(int workspace_index, bool focus) {
+      return send_act("MoveColumnToWorkspace", serialize_fields({ obj_member("reference", { int_member("Index", workspace_index) }), bool_member("focus", focus) }));
+    }
+
+    public static bool move_column_to_workspace_by_name(string workspace_name, bool focus) {
+      return send_act("MoveColumnToWorkspace", serialize_fields({ obj_member("reference", { str_member("Name", workspace_name) }), bool_member("focus", focus) }));
     }
 
     public static bool move_workspace_down() {
@@ -332,16 +484,40 @@ public class msg : Object {
       return send_act("MoveWorkspaceUp");
     }
 
-    public static bool move_workspace_to_index(size_t index, ActionFields.WorkspaceReferenceArg? reference) {
-      return send_act("MoveWorkspaceToIndex", new Actions.MoveWorkspaceToIndex(index, reference).to_string());
+    public static bool move_workspace_to_index_by_index(int workspace_index, int index) {
+      return send_act("MoveWorkspaceToIndex", serialize_fields({ obj_member("reference", { int_member("Index", workspace_index) }), int_member("index", index) }));
     }
 
-    public static bool set_workspace_name(string name, ActionFields.WorkspaceReferenceArg? workspace) {
-      return send_act("SetWorkspaceName", new Actions.SetWorkspaceName(name, workspace).to_string());
+    public static bool move_workspace_to_index_by_id(int workspace_id, int index) {
+      return send_act("MoveWorkspaceToIndex", serialize_fields({ obj_member("reference", { int_member("Id", workspace_id) }), int_member("index", index) }));
     }
 
-    public static bool unset_workspace_name(ActionFields.WorkspaceReferenceArg? workspace) {
-      return send_act("UnsetWorkspaceName", new Actions.UnsetWorkspaceName(workspace).to_string());
+    public static bool move_workspace_to_index_by_name(string workspace_name, int index) {
+      return send_act("MoveWorkspaceToIndex", serialize_fields({ obj_member("reference", { str_member("Name", workspace_name) }), int_member("index", index) }));
+    }
+
+    public static bool set_workspace_name_by_index(int workspace_index, string new_name) {
+      return send_act("SetWorkspaceName", serialize_fields({ obj_member("reference", { int_member("Index", workspace_index )}), str_member("name", new_name) }));
+    }
+
+    public static bool set_workspace_name_by_id(int workspace_id, string new_name) {
+      return send_act("SetWorkspaceName", serialize_fields({ obj_member("reference", { int_member("Id", workspace_id )}), str_member("name", new_name) }));
+    }
+
+    public static bool set_workspace_name_by_name(string workspace_name, string new_name) {
+      return send_act("SetWorkspaceName", serialize_fields({ obj_member("reference", { str_member("Name", workspace_name )}), str_member("name", new_name) }));
+    }
+
+    public static bool unset_workspace_name_by_index(int workspace_index) {
+      return send_act("UnsetWorkspaceName", serialize_fields({ obj_member("reference", { int_member("Index", workspace_index) })}));
+    }
+
+    public static bool unset_workspace_name_by_id(int workspace_id) {
+      return send_act("UnsetWorkspaceName", serialize_fields({ obj_member("reference", { int_member("Id", workspace_id) })}));
+    }
+
+    public static bool unset_workspace_name_by_name(string workspace_name) {
+      return send_act("UnsetWorkspaceName", serialize_fields({ obj_member("reference", { str_member("Name", workspace_name) })}));
     }
 
     public static bool focus_monitor_left() {
@@ -369,7 +545,7 @@ public class msg : Object {
     }
 
     public static bool focus_monitor(string output) {
-      return send_act("FocusMonitor", new Actions.FocusMonitor(output).to_string());
+      return send_act("FocusMonitor", serialize_fields({ str_member("output", output) }));
     }
 
     public static bool move_window_to_monitor_left() {
@@ -388,8 +564,8 @@ public class msg : Object {
       return send_act("MoveWindowToMonitorUp");
     }
 
-    public static bool move_window_to_monitor(uint64? id, string output) {
-      return send_act("MoveWindowToMonitor", new Actions.MoveWindowToMonitor(id, output).to_string());
+    public static bool move_window_to_monitor(int? id, string output) {
+      return send_act("MoveWindowToMonitor", serialize_fields({ int_member("id", id), str_member("output", output) }));
     }
 
     public static bool move_column_to_monitor_left() {
@@ -417,39 +593,75 @@ public class msg : Object {
     }
 
     public static bool move_column_to_monitor(string output) {
-      return send_act("MoveColumnToMonitor", new Actions.MoveColumnToMonitor(output).to_string());
+      return send_act("MoveColumnToMonitor", serialize_fields({ str_member("output", output) }));
     }
 
-    public static bool set_window_width(uint64? id, ActionFields.SizeChange change) {
-      return send_act("SetWindowHeight", new Actions.SetWindowWidth(id, change).to_string());
+    public static bool set_window_width_set_fixed(int? id, int fixed_value) {
+      return send_act("SetWindowWidth", serialize_fields({ int_member("id", id), obj_member("change", { int_member("SetFixed", fixed_value) }) }));
     }
 
-    public static bool set_window_height(uint64? id, ActionFields.SizeChange change) {
-      return send_act("SetWindowHeight", new Actions.SetWindowHeight(id, change).to_string());
+    public static bool set_window_width_set_proportion(int? id, double proportion) {
+      return send_act("SetWindowWidth", serialize_fields({ int_member("id", id), obj_member("change", { double_member("SetProportion", proportion) }) }));
     }
 
-    public static bool reset_window_height(uint64? id) {
-      return send_act("ResetWindowHeight", new Actions.ResetWindowHeight(id).to_string());
+    public static bool set_window_width_adjust_fixed(int? id, int fixed_value) {
+      return send_act("SetWindowWidth", serialize_fields({ int_member("id", id), obj_member("change", { int_member("AdjustFixed", fixed_value) }) }));
+    }
+
+    public static bool set_window_width_adjust_proportion(int? id, double proportion) {
+      return send_act("SetWindowWidth", serialize_fields({ int_member("id", id), obj_member("change", { double_member("AdjustProportion", proportion) }) }));
+    }
+
+    public static bool set_window_height_set_fixed(int? id, int fixed_value) {
+      return send_act("SetWindowHeight", serialize_fields({ int_member("id", id), obj_member("change", { int_member("SetFixed", fixed_value) }) }));
+    }
+
+    public static bool set_window_height_set_proportion(int? id, double proportion) {
+      return send_act("SetWindowHeight", serialize_fields({ int_member("id", id), obj_member("change", { double_member("SetProportion", proportion) }) }));
+    }
+
+    public static bool set_window_height_adjust_fixed(int? id, int fixed_value) {
+      return send_act("SetWindowHeight", serialize_fields({ int_member("id", id), obj_member("change", { int_member("AdjustFixed", fixed_value) }) }));
+    }
+
+    public static bool set_window_height_adjust_proportion(int? id, double proportion) {
+      return send_act("SetWindowHeight", serialize_fields({ int_member("id", id), obj_member("change", { double_member("AdjustProportion", proportion) }) }));
+    }
+
+    public static bool reset_window_height(int? id) {
+      return send_act("ResetWindowHeight", serialize_fields({ int_member("id", id) }));
     }
 
     public static bool switch_preset_column_width() {
       return send_act("SwitchPresetColumnWidth");
     }
 
-    public static bool switch_preset_window_width(uint64? id) {
-      return send_act("SwitchPresetWindowWidth", new Actions.SwitchPresetWindowWidth(id).to_string());
+    public static bool switch_preset_window_width(int? id) {
+      return send_act("SwitchPresetWindowWidth", serialize_fields({ int_member("id", id) }));
     }
 
-    public static bool switch_preset_window_height(uint64? id) {
-      return send_act("SwitchPresetWindowHeight", new Actions.SwitchPresetWindowHeight(id).to_string());
+    public static bool switch_preset_window_height(int? id) {
+      return send_act("SwitchPresetWindowHeight", serialize_fields({ int_member("id", id) }));
     }
 
     public static bool maximize_column() {
       return send_act("MaximizeColumn");
     }
 
-    public static bool set_column_width(ActionFields.SizeChange change) {
-      return send_act("SetColumnWidth", new Actions.SetColumnWidth(change).to_string());
+    public static bool set_column_width_set_fixed(int? id, int fixed_value) {
+      return send_act("SetColumnWidth", serialize_fields({ int_member("id", id), obj_member("change", { int_member("SetFixed", fixed_value) }) }));
+    }
+
+    public static bool set_column_width_set_proportion(int? id, double proportion) {
+      return send_act("SetColumnWidth", serialize_fields({ int_member("id", id), obj_member("change", { double_member("SetProportion", proportion) }) }));
+    }
+
+    public static bool set_column_width_adjust_fixed(int? id, int fixed_value) {
+      return send_act("SetColumnWidth", serialize_fields({ int_member("id", id), obj_member("change", { int_member("AdjustFixed", fixed_value) }) }));
+    }
+
+    public static bool set_column_width_adjust_proportion(int? id, double proportion) {
+      return send_act("SetColumnWidth", serialize_fields({ int_member("id", id), obj_member("change", { double_member("AdjustProportion", proportion) }) }));
     }
 
     public static bool expand_column_to_available_width() {

@@ -460,7 +460,7 @@ public class msg : Object {
     //   return send_act("SwitchLayout", new Actions.SwitchLayout(layout).to_string());
     // }
 
-    public static string layout_switch_target(ActionFields.LayoutSwitchTargetTag tag, uint8? index = null) {
+    private static string layout_switch_target(ActionFields.LayoutSwitchTargetTag tag, uint8? index = null) {
       switch (tag) {
         case ActionFields.LayoutSwitchTargetTag.Next:
           return "\"Next\"";
@@ -484,7 +484,7 @@ public class msg : Object {
       return send_act("SwitchLayout", "{\"layout\":%s}".printf(target));
     }
 
-    public static string workspace_reference_arg<T>(ActionFields.WorkspaceReferenceArgTag tag, T value) {
+    private static string workspace_reference_arg<T>(ActionFields.WorkspaceReferenceArgTag tag, T value) {
       switch (tag) {
         case ActionFields.WorkspaceReferenceArgTag.Name:
           if (typeof(T) != typeof(string)) {
@@ -505,7 +505,7 @@ public class msg : Object {
       return "";
     }
 
-    public static bool focus_workspace<T>(ActionFields.WorkspaceReferenceArgTag tag, T value) {
+    private static bool focus_workspace<T>(ActionFields.WorkspaceReferenceArgTag tag, T value) {
       var reference = workspace_reference_arg<T>(tag, value);
       if (reference == "") {
         critical("Invalid workspace reference");
@@ -514,6 +514,17 @@ public class msg : Object {
       return send_act("FocusWorkspace", "{\"reference\":%s}".printf(reference));
     }
 
+    public static bool focus_workspace_id(int id) {
+      return focus_workspace(ActionFields.WorkspaceReferenceArgTag.Id, id);
+    }
+
+    public static bool focus_workspace_index(int index) {
+      return focus_workspace(ActionFields.WorkspaceReferenceArgTag.Index, index);
+    }
+
+    public static bool focus_workspace_name(string name) {
+      return focus_workspace(ActionFields.WorkspaceReferenceArgTag.Name, name);
+    }
 
     // TODO(2025-06-07, Max Bolotin): Continue here
 

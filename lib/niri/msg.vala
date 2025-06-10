@@ -7,10 +7,6 @@ struct ParameterFunc {
 }
 
 public class msg : Object {
-    public static void init() {
-      ActionFields.register_serialize_funcs();
-    }
-
     public static string? send(string message) {
         IPC ipc;
 
@@ -396,13 +392,13 @@ public class msg : Object {
       return send_act("ToggleColumnTabbedDisplay");
     }
 
-    public static bool set_column_display(ActionFields.ColumnDisplayTag display) {
+    public static bool set_column_display(ColumnDisplayTag display) {
       string display_field;
       switch (display) {
-        case ActionFields.ColumnDisplayTag.Normal:
+        case ColumnDisplayTag.Normal:
           display_field = "Normal";
           break;
-        case ActionFields.ColumnDisplayTag.Tabbed:
+        case ColumnDisplayTag.Tabbed:
           display_field = "Tabbed";
           break;
         default:
@@ -685,14 +681,6 @@ public class msg : Object {
     private static string fmt_str(string str) {
       return "\"%s\"\n".printf(str);
     }
-
-    // private static string fmt_bool(boolean bool) {
-    //   return "%s".printf(bool ? "true" : "false");
-    // }
-    //
-    // private static string fmt_int(int int) {
-    //   return "%s".printf("")
-    // }
 
     public string layers() {
       return send(fmt_str("Layers"));

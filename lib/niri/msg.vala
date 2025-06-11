@@ -330,12 +330,28 @@ public class msg : Object {
       return send_act("FocusWindowUpOrColumnRight");
     }
 
+    public static bool focus_workspace_by_id(int workspace_id) {
+      return send_act("FocusWorkspace", serialize_fields({ obj_member("reference", { int_member("Id", workspace_id) }) }));
+    }
+
+    public static bool focus_workspace_by_index(int workspace_index) {
+      return send_act("FocusWorkspace", serialize_fields({ obj_member("reference", { int_member("Index", workspace_index) }) }));
+    }
+
+    public static bool focus_workspace_by_name(string workspace_name) {
+      return send_act("FocusWorkspace", serialize_fields({ obj_member("reference", { str_member("Name", workspace_name) }) }));
+    }
+
     public static bool focus_workspace_down() {
       return send_act("FocusWorkspaceDown");
     }
 
     public static bool focus_workspace_previous() {
       return send_act("FocusWorkspacePrevious");
+    }
+
+    public static bool focus_workspace_next() {
+      return send_act("FocusWorkspaceNext");
     }
 
     public static bool focus_workspace_up() {

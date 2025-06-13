@@ -143,8 +143,7 @@ public class msg : Object {
             ipc = IPC.connect();
             if (ipc == null ) return null;
             var istream = ipc.send(Json.from_string(message));
-            var line = istream.read_line();
-            return line;
+            return istream.read_line();
         } catch (Error err) {
             critical("command Error: %s", err.message);
             return err.message;
@@ -159,9 +158,7 @@ public class msg : Object {
             ipc = IPC.connect();
             if (ipc == null ) return "no ipc";
             var istream = ipc.send(Json.from_string(message));
-            var line = yield istream.read_line_async();
-            critical("%s", line);
-            return line;
+            return yield istream.read_line_async();
         } catch (Error err) {
             critical("command Error: %s", err.message);
             return err.message;
@@ -177,9 +174,8 @@ public class msg : Object {
     /** Formats a simple action for Niri's IPC   */
     private static bool send_act(string str, string fields = "{}") {
         var cmd = "{\"Action\":{\"%s\":%s}}\n".printf(str, fields);
-        debug("Sending: %s", cmd);
+        // print("Sending: %s", cmd);
         var res = send(cmd);
-        debug(res);
         if (res == "{\"Ok\":\"Handled\"}") return true;
         return false;
     }

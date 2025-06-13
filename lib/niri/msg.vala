@@ -293,6 +293,12 @@ public class msg : Object {
     public static bool focus_window_down_or_top() {
       return send_act("FocusWindowDownOrTop");
     }
+    public static bool focus_window_or_workspace_down() {
+      return send_act("FocusWindowOrWorkspaceDown");
+    }
+    public static bool focus_window_or_workspace_up() {
+      return send_act("FocusWindowOrWorkspaceUp");
+    }
 
     public static bool focus_window_in_column(int index) {
       return send_act("FocusWindowInColumn", serialize_fields({ int_member("index", index) }));
@@ -491,6 +497,14 @@ public class msg : Object {
 
     public static bool move_window_to_monitor_up() {
       return send_act("MoveWindowToMonitorUp");
+    }
+
+    public static bool move_window_to_monitor_previous() {
+      return send_act("MoveWindowToMonitorPrevious");
+    }
+
+    public static bool move_window_to_monitor_next() {
+      return send_act("MoveWindowToMonitorNext");
     }
 
     public static bool move_window_to_tiling(int? id) {

@@ -91,16 +91,6 @@ public class msg : Object {
       };
     }
 
-    /** Formats a simple action for Niri's IPC   */
-    private static bool send_act(string str, string fields = "{}") {
-        var cmd = "{\"Action\":{\"%s\":%s}}\n".printf(str, fields);
-        print("Sending: %s", cmd);
-        var res = send(cmd);
-        critical(res);
-        if (res == "{\"Ok\":\"Handled\"}") return true;
-        return false;
-    }
-
     private static string serialize_fields(ParameterFunc[] fields) {
       var builder = new Json.Builder();
       var generator = new Json.Generator();
@@ -140,6 +130,58 @@ public class msg : Object {
           b.add_string_value(value);
         }
       };
+    }
+
+    //
+    // Raw Messsages
+    // 
+
+    public static string? send(string message) {
+        IPC ipc;
+
+        try {
+            ipc = IPC.connect();
+            if (ipc == null ) return null;
+            var istream = ipc.send(Json.from_string(message));
+            var line = istream.read_line();
+            return line;
+        } catch (Error err) {
+            critical("command Error: %s", err.message);
+            return err.message;
+        } finally {
+            ipc.close();
+        }
+    }
+
+    public static async string send_async(string message) {
+        IPC ipc;
+        try {
+            ipc = IPC.connect();
+            if (ipc == null ) return "no ipc";
+            var istream = ipc.send(Json.from_string(message));
+            var line = yield istream.read_line_async();
+            critical("%s", line);
+            return line;
+        } catch (Error err) {
+            critical("command Error: %s", err.message);
+            return err.message;
+        } finally {
+            ipc.close();
+        }
+    }
+
+    //
+    // Niri Actions
+    // 
+    
+    /** Formats a simple action for Niri's IPC   */
+    private static bool send_act(string str, string fields = "{}") {
+        var cmd = "{\"Action\":{\"%s\":%s}}\n".printf(str, fields);
+        debug("Sending: %s", cmd);
+        var res = send(cmd);
+        debug(res);
+        if (res == "{\"Ok\":\"Handled\"}") return true;
+        return false;
     }
 
     public static bool center_column() {
@@ -661,38 +703,6 @@ public class msg : Object {
       return send_act("ScreenshotWindow", serialize_fields({ int_member("id", id), bool_member("write_to_disk", write_to_disk) }));
     }
 
-    public static string? send(string message) {
-        IPC ipc;
-
-        try {
-            ipc = IPC.connect();
-            if (ipc == null ) return null;
-            var istream = ipc.send(Json.from_string(message));
-            var line = istream.read_line();
-            return line;
-        } catch (Error err) {
-            critical("command Error: %s", err.message);
-            return err.message;
-        } finally {
-            ipc.close();
-        }
-    }
-
-    public static async string send_async(string message) {
-        IPC ipc;
-        try {
-            ipc = IPC.connect();
-            if (ipc == null ) return "no ipc";
-            var istream = ipc.send(Json.from_string(message));
-            var line = yield istream.read_line_async();
-            critical("%s", line);
-            return line;
-        } catch (Error err) {
-            critical("command Error: %s", err.message);
-            return err.message;
-        } finally {
-            ipc.close();
-        }
     }
 
     public static bool set_column_display(ColumnDisplayTag display) {

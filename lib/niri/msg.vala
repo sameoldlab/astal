@@ -737,7 +737,7 @@ public class msg : Object {
       return send_act("SetWindowHeight", serialize_fields({ int_member("id", id), obj_member("change", { double_member("SetProportion", proportion) }) }));
     }
 
-    public static bool set_window_urgent(int? id) {
+    public static bool set_window_urgent(int id) {
       return send_act("SetWindowUrgent", serialize_fields({ int_member("id", id) }));
     }
 
@@ -837,7 +837,7 @@ public class msg : Object {
       return send_act("ToggleWindowRuleOpacity", serialize_fields({ int_member("id", id) }));
     }
 
-    public static bool toggle_window_urgent(int? id) {
+    public static bool toggle_window_urgent(int id) {
       return send_act("ToggleWindowUrgent", serialize_fields({ int_member("id", id) }));
     }
 
@@ -845,7 +845,7 @@ public class msg : Object {
       return send_act("ToggleWindowedFullscreen", serialize_fields({ int_member("id", id) }));
     }
 
-    public static bool unset_window_urgent(int? id) {
+    public static bool unset_window_urgent(int id) {
       return send_act("UnsetWindowUrgent", serialize_fields({ int_member("id", id) }));
     }
 

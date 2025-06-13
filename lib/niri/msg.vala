@@ -382,7 +382,7 @@ public class msg : Object {
     }
 
     public static bool move_column_right_or_to_monitor_right() {
-      return send_act("MoveColumnLeftOrToMonitorRight");
+      return send_act("MoveColumnRightOrToMonitorRight");
     }
 
     public static bool move_column_to_first() {
@@ -713,7 +713,7 @@ public class msg : Object {
       return send_act("SetColumnWidth", serialize_fields({ int_member("id", id), obj_member("change", { double_member("SetProportion", proportion) }) }));
     }
 
-    public static bool set_dyhnamic_cast_window(int? id) {
+    public static bool set_dynamic_cast_window(int? id) {
       return send_act("SetDynamicCastWindow", serialize_fields({ int_member("id", id) }));
     }
 

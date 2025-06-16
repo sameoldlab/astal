@@ -40,7 +40,7 @@ public class Output : Object {
         var _physical_size = object.get_member("physical_size");
         if (_physical_size.is_null()) { physical_size = null;}
         else {
-            physical_size = PhysicalSize.from_json(_physical_size.get_object());
+            physical_size = PhysicalSize.from_json(_physical_size.get_array());
         }
 
         foreach (var mode in object.get_array_member("modes").get_elements()) 

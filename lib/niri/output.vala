@@ -25,6 +25,10 @@ public class Output : Object {
     public signal void active_workspace_changed(int64? id);
 
     internal Output.from_json(Json.Object object) {
+        sync(object);
+    }
+
+    internal void sync(Json.Object object) {
         name = object.get_string_member("name");
         make = object.get_string_member("make");
         model = object.get_string_member("model");

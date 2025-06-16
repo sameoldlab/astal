@@ -35,11 +35,11 @@ public class Output : Object {
         model = object.get_string_member("model");
 
         var _serial = object.get_member("serial");
-        if (_serial.is_null()) { serial = null;}
-        else { serial = _serial.get_string(); }
+        if (_serial.is_null())  serial = null;
+        else serial = _serial.get_string();
 
         var _physical_size = object.get_member("physical_size");
-        if (_physical_size.is_null()) { physical_size = null;}
+        if (_physical_size.is_null()) physical_size = null;
         else {
             physical_size = PhysicalSize.from_json(_physical_size.get_array());
         }
@@ -49,17 +49,15 @@ public class Output : Object {
         
 
         var _current_mode = object.get_member("current_mode");
-        if (_current_mode.is_null()) { current_mode = -1;}
-        else { current_mode = _current_mode.get_int(); }
+        if (_current_mode.is_null())  current_mode = -1;
+        else current_mode = _current_mode.get_int();
 
         vrr_supported = object.get_boolean_member("vrr_supported");
         vrr_enabled = object.get_boolean_member("vrr_enabled");
 
         var _logical = object.get_member("logical");
-        if (_logical.is_null()) { logical = null;}
-        else {
-            logical = LogicalOutput.from_json(_logical.get_object());
-        }
+        if (_logical.is_null())  logical = null;
+        else logical = LogicalOutput.from_json(_logical.get_object());
     }
 
     public unowned Workspace? get_active_workspace() {

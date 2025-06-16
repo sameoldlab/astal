@@ -25,6 +25,7 @@ public class Output : Object {
     public signal void active_workspace_changed(int64? id);
 
     internal Output.from_json(Json.Object object) {
+        modes = new Array<Mode>();
         sync(object);
     }
 

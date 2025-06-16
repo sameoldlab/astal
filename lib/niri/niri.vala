@@ -33,7 +33,12 @@ public class Niri : Object {
 
     public Workspace? focused_workspace { get; private set; }
     public Window? focused_window { get; private set; }
-    public Output? focused_output { get; private set; }
+    public Output? focused_output { get {
+        if (focused_workspace == null ) return null;
+        unowned var output = _outputs.get(focused_workspace.output); 
+        if (output == null ) return null;
+        return output;
+    } }
 
     public List<weak Window> windows { owned get { return _windows.get_values().copy(); } }
     public List<weak Output> outputs { owned get { return _outputs.get_values().copy(); } }
@@ -42,7 +47,6 @@ public class Niri : Object {
         res.sort(sort_workspaces);
         return res;
     } }
-    //TODO: public Output? focused_output {get; private set; }
 
     /** An event has been received. */
     public signal void event(Json.Node event);

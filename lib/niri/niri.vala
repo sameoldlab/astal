@@ -184,7 +184,7 @@ public class Niri : Object {
         _outputs.remove_all();
         Json.Node node;
         try {
-            node = Json.from_string(yield msg.send_async("\"Output\""));
+            node = Json.from_string(yield msg.send_async("\"Outputs\""));
             if(node == null) return;
         } catch (Error err) {
             critical("msg %s", err.message);

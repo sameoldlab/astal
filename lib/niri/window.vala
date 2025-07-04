@@ -44,17 +44,13 @@ public class Window : Object {
             if (init) {
                 workspace_id = new_workspace_id;
             } else if (workspace_id != new_workspace_id) {
+                Niri.get_default().get_window(workspace_id)?.notify_property("windows");
                 workspace_id = new_workspace_id;
-                notify_workspace(new_workspace_id);
+                workspace?.notify_property("windows");
             }
         }
     }
 
-    private void notify_workspace(int64 id) {
-        // may be null at start of event stream
-        if(workspace == null) return;
-        workspace.notify_property("windows");
-    }
     // public bool focus(string app_id) {
     // no focus_window_by_id in ipc. needs wlr-toplevel protocol
     // }

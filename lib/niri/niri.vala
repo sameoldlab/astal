@@ -3,10 +3,7 @@ public Niri get_default() {
     return Niri.get_default();
 }
 public class Niri : Object {
-    [CCode(has_target = false)]
-    private delegate void EventHandler(Niri self, Json.Object object);
-    private static HashTable<string, EventHandler> event_handlers =
-        new HashTable<string, EventHandler>(str_hash, str_equal);
+
 
     internal HashTable<uint64?, Workspace>  _workspaces =
         new HashTable<uint64?,  Workspace> (int64_hash, int64_equal);
@@ -68,21 +65,6 @@ public class Niri : Object {
     static Niri _instance;
 
     // https://yalter.github.io/niri/niri_ipc/enum.Event.html
-    static construct {
-        event_handlers.insert("WorkspacesChanged",            (EventHandler) on_workspaces_changed);
-        event_handlers.insert("WorkspaceActivated",           (EventHandler) on_workspace_activated);
-        event_handlers.insert("WorkspaceActiveWindowChanged", (EventHandler) on_workspace_active_window_changed);
-        event_handlers.insert("WindowsChanged",               (EventHandler) on_windows_changed);
-        event_handlers.insert("WindowOpenedOrChanged",        (EventHandler) on_window_opened_or_changed);
-        event_handlers.insert("WindowClosed",                 (EventHandler) on_window_closed);
-        event_handlers.insert("WindowFocusChanged",           (EventHandler) on_window_focus_changed);
-        event_handlers.insert("WindowUrgencyChanged",         (EventHandler) on_window_urgency_changed);
-        event_handlers.insert("WorkspaceUrgencyChanged",      (EventHandler) on_workspace_urgency_changed);
-        event_handlers.insert("KeyboardLayoutsChanged",       (EventHandler) on_keyboard_layouts_changed);
-        event_handlers.insert("KeyboardLayoutSwitched",       (EventHandler) on_keyboard_layout_switched);
-        event_handlers.insert("OverviewOpenedOrClosed",       (EventHandler) on_overview_opened_or_closed);
-
-    }
 
     public static Niri? get_default() {
         if (_instance != null)
@@ -137,13 +119,45 @@ public class Niri : Object {
 
                 var event_type = obj.get_members().data;
                 var event = obj.get_object_member(event_type);
-                var handler = event_handlers.get(event_type);
-                if (handler == null) {
-                    warning("Unhandled event %s", event_type);
-                    continue;
-                }
 
-                handler(this, event);
+                switch (event_type) {
+                    case "WorkspacesChanged":
+                        on_workspaces_changed(event);
+                        break;
+                    case "WorkspaceActivated":
+                        on_workspace_activated(event);
+                        break;
+                    case "WorkspaceActiveWindowChanged":
+                        on_workspace_active_window_changed(event);
+                        break;
+                    case "WindowsChanged":
+                        on_windows_changed(event);
+                        break;
+                    case "WindowOpenedOrChanged":
+                        on_window_opened_or_changed(event);
+                        break;
+                    case "WindowClosed":
+                        on_window_closed(event);
+                        break;
+                    case "WindowFocusChanged":
+                        on_window_focus_changed(event);
+                        break;
+                    case "WindowUrgencyChanged":
+                        on_window_urgency_changed(event);
+                        break;
+                    case "WorkspaceUrgencyChanged":
+                        on_workspace_urgency_changed(event);
+                        break;
+                    case "KeyboardLayoutsChanged":
+                        on_keyboard_layouts_changed(event);
+                        break;
+                    case "KeyboardLayoutSwitched":
+                        on_keyboard_layout_switched(event);
+                        break;
+                    case "OverviewOpenedOrClosed":
+                        on_overview_opened_or_closed(event);
+                        break;
+                }
             }
         } catch (Error err) {
             critical("%s", err.message);

@@ -64,7 +64,6 @@ public class Niri : Object {
     private IPC? event_socket;
     static Niri _instance;
 
-    // https://yalter.github.io/niri/niri_ipc/enum.Event.html
 
     public static Niri? get_default() {
         if (_instance != null)
@@ -120,42 +119,156 @@ public class Niri : Object {
                 var event_type = obj.get_members().data;
                 var event = obj.get_object_member(event_type);
 
+                // https://yalter.github.io/niri/niri_ipc/enum.Event.html
                 switch (event_type) {
                     case "WorkspacesChanged":
-                        on_workspaces_changed(event);
+                        var workspaces_arr = event.get_array_member("workspaces");
+
+                        _workspaces.remove_all();
+                        update_outputs.begin();
+                        foreach (var element in workspaces_arr.get_elements()) {
+                            var workspace = new Workspace.from_json(element.get_object());
+                            _workspaces.insert(workspace.id, workspace);
+                            if(workspace.is_focused) {
+                                update_focused_workspace(workspace.id);
+                            }
+                        }
+                        workspaces_changed(workspaces);
+                        notify_property("workspaces");
                         break;
                     case "WorkspaceActivated":
-                        on_workspace_activated(event);
+                        var id = event.get_int_member("id");
+                        var focused = event.get_boolean_member("focused");
+
+                        var activated_workspace = get_workspace(id);
+                        if (activated_workspace == null) {
+                            unknown_workspace(id);
+                            return;
+                        }
+
+                        foreach (var workspace in _workspaces.get_values()) {
+                            if (workspace.output == activated_workspace.output) {
+                              workspace.is_active = workspace == activated_workspace;
+                            }
+                        }
+                        if (focused) update_focused_workspace(id);
+
+                        workspace_activated(id, focused);
+                        activated_workspace.activated();
                         break;
                     case "WorkspaceActiveWindowChanged":
-                        on_workspace_active_window_changed(event);
+                        var workspace_id = event.get_int_member("workspace_id");
+                        var _active_window_id = event.get_member("active_window_id");
+
+                        var workspace = get_workspace(workspace_id);
+                        if (workspace == null) {
+                            unknown_workspace(workspace_id);
+                            return;
+                        }
+
+                        if (_active_window_id.is_null()) {
+                            workspace.active_window_id = 0;
+                            workspace_active_window_changed(workspace_id, 0);
+                        } else {
+                            var active_window_id = _active_window_id.get_int();
+                            workspace.active_window_id = active_window_id;
+                            workspace_active_window_changed(workspace_id, active_window_id);
+                        }
+                        workspace.active_window_changed(workspace.active_window_id);
                         break;
                     case "WindowsChanged":
-                        on_windows_changed(event);
+                        var windows_arr = event.get_array_member("windows");
+
+                        _windows.remove_all();
+                        foreach (var element in windows_arr.get_elements()) {
+                            var window = new Window.from_json(element.get_object());
+                            _windows.insert(window.id, window);
+                            if (window.is_focused) update_focused_window(window.id);
+                        }
+                        windows_changed(windows);
+                        notify_property("windows");
                         break;
                     case "WindowOpenedOrChanged":
-                        on_window_opened_or_changed(event);
+                        var window_object = event.get_object_member("window");
+                        var window_id = window_object.get_int_member("id");
+
+                        var window = _windows.get(window_id);
+                        if (window != null) {
+                            window.sync(window_object);
+                            window_changed(window);
+                        } else {
+                            window = new Window.from_json(window_object);
+                            _windows.insert(window_id, window);
+                            window_opened(window);
+                            notify_property("windows");
+                            get_workspace(window.workspace_id)?.notify_property("windows");
+                        }
+
+                        if (window.is_focused) update_focused_window(window.id);
+                        window_opened_or_changed(window);
                         break;
                     case "WindowClosed":
-                        on_window_closed(event);
+                        var id = event.get_int_member("id");
+
+                        var window = _windows.take(id);
+                        if (window == null) {
+                            unknown_window(id);
+                            return;
+                        }
+
+                        window_closed(id);
+                        window.closed();
+                        notify_property("windows");
+                        var workspace = get_workspace(window.workspace_id);
+                        if (workspace != null) workspace.notify_property("windows");
                         break;
                     case "WindowFocusChanged":
-                        on_window_focus_changed(event);
+                        var _id = event.get_member("id");
+                        uint64 id = 0;
+                        if (!_id.is_null())  id = _id.get_int();
+
+                        update_focused_window(id);
                         break;
                     case "WindowUrgencyChanged":
-                        on_window_urgency_changed(event);
+                        var id = event.get_int_member("id");
+                        var urgent = event.get_boolean_member("urgent");
+
+                        var window = get_window(id);
+                        if(window != null) {
+                            window.is_urgent = urgent;
+                        }
+
+                        window_urgency_changed(id, urgent);
                         break;
                     case "WorkspaceUrgencyChanged":
-                        on_workspace_urgency_changed(event);
+                        var id = event.get_int_member("id");
+                        var urgent = event.get_boolean_member("urgent");
+
+                        var workspace = get_workspace(id);
+                        if(workspace != null) {
+                            workspace.is_urgent = urgent;
+                        }
+                        workspace_urgency_changed(id, urgent);
                         break;
                     case "KeyboardLayoutsChanged":
-                        on_keyboard_layouts_changed(event);
+                        var layouts = event.get_object_member("keyboard_layouts");
+                        var names = layouts.get_array_member("names");
+
+                        foreach (var element in names.get_elements()) {
+                            keyboard_layouts.append_val(element.get_string());
+                        }
+
+                        keyboard_layout_idx = (uint8) layouts.get_int_member("current_idx");
+                        keyboard_layouts_changed(keyboard_layouts);
                         break;
                     case "KeyboardLayoutSwitched":
-                        on_keyboard_layout_switched(event);
+                        keyboard_layout_idx = (uint8) event.get_int_member("idx");
+                        keyboard_layout_switched(keyboard_layout_idx);
                         break;
                     case "OverviewOpenedOrClosed":
-                        on_overview_opened_or_closed(event);
+                        var is_open = event.get_boolean_member("is_open");
+                        overview.is_open = is_open;
+                        overview_opened_or_closed(is_open);
                         break;
                 }
             }
@@ -165,22 +278,6 @@ public class Niri : Object {
         } finally {
             event_socket.close();
         }
-    }
-
-    private void on_workspaces_changed(Json.Object event) {
-        var workspaces_arr = event.get_array_member("workspaces");
-
-        _workspaces.remove_all();
-        update_outputs.begin();
-        foreach (var element in workspaces_arr.get_elements()) {
-            var workspace = new Workspace.from_json(element.get_object());
-            _workspaces.insert(workspace.id, workspace);
-            if(workspace.is_focused) {
-                update_focused_workspace(workspace.id);
-            }
-        }
-        workspaces_changed(workspaces);
-        notify_property("workspaces");
     }
 
     private async void update_outputs() {
@@ -207,152 +304,6 @@ public class Niri : Object {
             _outputs.insert(name, output);
         }
         notify_property("outputs");
-    }
-
-    private void on_workspace_activated(Json.Object event) {
-        var id = event.get_int_member("id");
-        var focused = event.get_boolean_member("focused");
-
-        var activated_workspace = get_workspace(id);
-        if (activated_workspace == null) {
-            unknown_workspace(id);
-            return;
-        }
-
-        foreach (var workspace in _workspaces.get_values()) {
-            if (workspace.output == activated_workspace.output) {
-              workspace.is_active = workspace == activated_workspace;
-            }
-        }
-        if (focused) update_focused_workspace(id);
-
-        workspace_activated(id, focused);
-        activated_workspace.activated();
-    }
-
-    private void on_workspace_active_window_changed(Json.Object event) {
-        var workspace_id = event.get_int_member("workspace_id");
-        var _active_window_id = event.get_member("active_window_id");
-
-        var workspace = get_workspace(workspace_id);
-        if (workspace == null) {
-            unknown_workspace(workspace_id);
-            return;
-        }
-
-        if (_active_window_id.is_null()) {
-            workspace.active_window_id = 0;
-            workspace_active_window_changed(workspace_id, 0);
-        } else {
-            var active_window_id = _active_window_id.get_int();
-            workspace.active_window_id = active_window_id;
-            workspace_active_window_changed(workspace_id, active_window_id);
-        }
-            workspace.active_window_changed(workspace.active_window_id);
-    }
-
-    private void on_windows_changed(Json.Object event) {
-        var windows_arr = event.get_array_member("windows");
-
-        _windows.remove_all();
-        foreach (var element in windows_arr.get_elements()) {
-            var window = new Window.from_json(element.get_object());
-            _windows.insert(window.id, window);
-            if (window.is_focused) update_focused_window(window.id);
-        }
-        windows_changed(windows);
-        notify_property("windows");
-    }
-
-    private void on_window_opened_or_changed(Json.Object event) {
-        var window_object = event.get_object_member("window");
-        var window_id = window_object.get_int_member("id");
-
-        var window = _windows.get(window_id);
-        if (window != null) {
-            window.sync(window_object);
-            window_changed(window);
-        } else {
-            window = new Window.from_json(window_object);
-            _windows.insert(window_id, window);
-            window_opened(window);
-            notify_property("windows");
-            get_workspace(window.workspace_id)?.notify_property("windows");
-        }
-
-        if (window.is_focused) update_focused_window(window.id);
-        window_opened_or_changed(window);
-    }
-
-    private void on_window_closed(Json.Object event) {
-        var id = event.get_int_member("id");
-
-        var window = _windows.take(id);
-        if (window == null) {
-            unknown_window(id);
-            return;
-        }
-
-        window_closed(id);
-        window.closed();
-        notify_property("windows");
-        var workspace = get_workspace(window.workspace_id);
-        if (workspace != null) workspace.notify_property("windows");
-    }
-
-    private void on_window_focus_changed(Json.Object event) {
-        var _id = event.get_member("id");
-        uint64 id = 0;
-        if (!_id.is_null())  id = _id.get_int();
-
-        update_focused_window(id);
-    }
-
-    private void on_window_urgency_changed(Json.Object event) {
-        var id = event.get_int_member("id");
-        var urgent = event.get_boolean_member("urgent");
-
-        var window = get_window(id);
-        if(window != null) {
-            window.is_urgent = urgent;
-        }
-
-        window_urgency_changed(id, urgent);
-    }
-
-    private void on_workspace_urgency_changed(Json.Object event) {
-        var id = event.get_int_member("id");
-        var urgent = event.get_boolean_member("urgent");
-
-        var workspace = get_workspace(id);
-        if(workspace != null) {
-            workspace.is_urgent = urgent;
-        }
-        workspace_urgency_changed(id, urgent);
-    }
-
-    private void on_keyboard_layouts_changed(Json.Object event) {
-        var layouts = event.get_object_member("keyboard_layouts");
-        var names = layouts.get_array_member("names");
-
-        foreach (var element in names.get_elements()) {
-            keyboard_layouts.append_val(element.get_string());
-        }
-
-        keyboard_layout_idx = (uint8) layouts.get_int_member("current_idx");
-        keyboard_layouts_changed(keyboard_layouts);
-    }
-
-    private void on_keyboard_layout_switched(Json.Object event) {
-        keyboard_layout_idx = (uint8) event.get_int_member("idx");
-
-        keyboard_layout_switched(keyboard_layout_idx);
-    }
-
-    private void on_overview_opened_or_closed(Json.Object event) {
-        var is_open = event.get_boolean_member("is_open");
-        overview.is_open = is_open;
-        overview_opened_or_closed(is_open);
     }
 
     public unowned Window? get_window(uint64 id) {

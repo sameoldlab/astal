@@ -12,6 +12,7 @@ public class Window : Object {
     public bool is_urgent { get; internal set; }
     /** if this is the current Focused Window */
     public bool is_focused { get; internal set; }
+    public WindowLayout layout {get; internal set;}
 
     public signal void changed(); 
 
@@ -47,6 +48,10 @@ public class Window : Object {
             prev_workspace?.notify_property("windows");
             workspace?.notify_property("windows");
         }
+        layout = WindowLayout.from_json(object.get_object_member("layout"));
+    }
+    internal void apply_layout(WindowLayout layout) {
+        this.layout = layout;
     }
 
     public bool focus(int id) {

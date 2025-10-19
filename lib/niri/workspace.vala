@@ -35,14 +35,14 @@ public class Workspace : Object {
     private static int sort_windows(Window a, Window  b) {
         // order all tiled windows first
         // then sort floating by ??? yoloing with opened order
-        if (a.is_floating() == false && b.is_floating() == false) {
+        if (a.is_floating == false && b.is_floating == false) {
             var x = (int)a.layout.pos_in_scrolling_layout[0] - (int)b.layout.pos_in_scrolling_layout[0];
             if (x != 0) return x;
             var y = (int)a.layout.pos_in_scrolling_layout[1] - (int)b.layout.pos_in_scrolling_layout[1];
             if (y != 0) return y;
             return 0;
-        } else if(a.is_floating() != b.is_floating()) {
-            if (b.is_floating()) return -1;
+        } else if(a.is_floating != b.is_floating) {
+            if (b.is_floating) return -1;
             // a must be floating
             return 1;
         } else {

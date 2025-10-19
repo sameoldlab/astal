@@ -42,16 +42,17 @@ public class Window : Object {
 
         int64 new_workspace_id = 0;
         if (!_workspace_id.is_null()) new_workspace_id = _workspace_id.get_int();
+        layout = WindowLayout.from_json(object.get_object_member("layout"));
         if(workspace_id != new_workspace_id) {
             var prev_workspace = workspace;
             workspace_id = new_workspace_id;
             prev_workspace?.notify_property("windows");
-            workspace?.notify_property("windows");
         }
-        layout = WindowLayout.from_json(object.get_object_member("layout"));
+        workspace?.notify_property("windows");
     }
     internal void apply_layout(WindowLayout layout) {
         this.layout = layout;
+        workspace?.notify_property("windows");
     }
 
     public bool focus(int id) {

@@ -2,6 +2,46 @@
 
 Library and CLI tool for monitoring the [Niri socket](https://github.com/YaLTeR/niri/wiki/IPC).
 
+## Usage
+
+You can browse the [Niri reference](https://aylur.github.io/libastal/niri).
+
+### Get Data
+
+Get outputs, workspaces, and windows from the default object as arrays...
+
+```c
+import Niri from "AstalNiri"
+niri = niri.get_default()
+
+// Loop through
+niri.windows.forEach(w => { // do stuff })
+niri.workspaces.forEach(w => { // do stuff })
+niri.outputs.forEach(o => { // do stuff })
+```
+
+or even iterating through them in layers.
+```c
+for o in niri.outputs {
+  for ws in o.workspaces {
+    for win in ws.windows {
+      print("window ", win.name, " on output ", ws.idx, " from output ", o.name)
+    }
+  }
+}
+```
+
+### Send Actions
+```c
+import Niri from "AstalNiri"
+// All actions are available through Niri.msg
+Niri.msg.focus_workspace_by_name("media")
+// Some object specific actions can also be called through the object 
+niri = niri.get_default()
+mediaWs = niri.get_workspace(3)
+mediaWs.focus()
+```
+
 ## Installation
 
 1. install dependencies

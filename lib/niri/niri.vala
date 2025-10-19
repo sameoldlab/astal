@@ -14,6 +14,7 @@ public class Niri : Object {
     Array<string> keyboard_layouts { get; private set; }
 
     public uint8 keyboard_layout_idx { get; private set; }
+    public bool config_load_failed { get; private set; }
     public Overview overview { get; private set; }
 
     public Workspace? focused_workspace { get; private set; }
@@ -247,6 +248,9 @@ public class Niri : Object {
                 var is_open = payload.get_boolean_member("is_open");
                 overview.is_open = is_open;
                 overview_opened_or_closed(is_open);
+                break;
+            case "ConfigLoaded":
+                config_load_failed = payload.get_boolean_member("failed");
                 break;
         }
     }

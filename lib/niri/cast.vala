@@ -55,34 +55,34 @@ public class Cast : Object {
             pw_node_id = null;
         }
 
-        var k = object.get_string_member("kind");
+        var _kind = object.get_string_member("kind");
 
-        if (k == "PipeWire") {
+        if (_kind == "PipeWire") {
             kind = CastKind.PipeWire;
-        } else if (k == "WlrScreencopy") {
+        } else if (_kind == "WlrScreencopy") {
             kind = CastKind.WlrScreencopy;
         } else {
             warning("Unknown CastKind");
         }
 
-        var t = object.get_object_member("target");
+        var _target = object.get_object_member("target");
 
-        if (t.has_member("Nothing")) {
+        if (_target.has_member("Nothing")) {
             target = CastTarget.None;
             target_output_name = null;
             target_window_id = null;
-        } else if (t.has_member("Output")) {
+        } else if (_target.has_member("Output")) {
             target = CastTarget.Output;
             target_window_id = null;
 
-            target_output_name = t.get_object_member("Output")
+            target_output_name = _target.get_object_member("Output")
                 .get_string_member("name");
 
-        } else if (t.has_member("Window")) {
+        } else if (_target.has_member("Window")) {
             target = CastTarget.Window;
             target_output_name = null;
 
-            target_window_id = t.get_object_member("Window")
+            target_window_id = _target.get_object_member("Window")
                   .get_int_member("id");
         }
 

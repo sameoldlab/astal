@@ -66,13 +66,11 @@ public class Niri : Object {
     // A screencast stopped.
     public signal void cast_stopped(uint64 stream_id);
 
-
     /** Workspace urgency changed */
     public signal void workspace_urgency_changed(uint64 id, bool urgent);
     public signal void overview_opened_or_closed(bool is_open);
     public signal void keyboard_layouts_changed(Array<string> keyboard_layouts);
     public signal void keyboard_layout_switched(uint8 idx);
-
 
     private IPC? stream_socket;
     static Niri _instance;
@@ -420,7 +418,6 @@ public class Niri : Object {
         if (id == 0) return null;
         return _casts.get(id);
     }
-
 
     // on_workspaces_changed
     // on_workspace_activated
